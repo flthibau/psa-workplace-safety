@@ -1,6 +1,8 @@
 #%%
 import os
 os.chdir('./score')
+print(os.getcwd())
+
 
 #%%
 # Configure workspace
@@ -29,11 +31,15 @@ aks_cluster_name = 'contoso-aks'
 prov_config = AksCompute.provisioning_configuration(location='eastus2')
 
 # Create the cluster
-aks_target = ComputeTarget.create(workspace=ws, 
+if aks_cluster_name in ws.compute_targets:
+    print(aks_cluster_name + " exist")
+    aks_target = ws.compute_targets[aks_cluster_name]
+
+else:
+    aks_target = ComputeTarget.create(workspace=ws, 
                                   name=aks_cluster_name, 
                                   provisioning_configuration=prov_config)
-
-aks_target.wait_for_completion(True)
+    aks_target.wait_for_completion(True)
 
 #%%
 # Create a container image
@@ -63,7 +69,7 @@ from azureml.core.webservice import Webservice, AksWebservice
 
 image = next((x for x in ContainerImage.list(ws, image_name='contosoimage') if x.creation_state == 'Succeeded'), None)
 
-aks_service_name = 'contosoman'
+aks_service_name = 'contosoman2'
 aks_config = AksWebservice.deploy_configuration(collect_model_data=True, enable_app_insights=True)
 aks_service = Webservice.deploy_from_image(workspace=ws, 
                                            name=aks_service_name,
@@ -80,11 +86,11 @@ aks_service.wait_for_deployment(show_output=True)
 import requests
 from azureml.core.webservice import Webservice, AksWebservice
 
-image = open('./samples/image3.jpg', 'rb')
+image = open('./samples/Before.jpg', 'rb')
 input_data = image.read()
 image.close()
 
-aks_service_name = 'contosoman'
+aks_service_name = 'contosoman2'
 aks_service = AksWebservice(workspace=ws, name=aks_service_name)
 
 auth = 'Bearer ' + aks_service.get_keys()[0]
@@ -105,7 +111,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
 
-image = Image.open('./samples/image3.jpg')
+image = Image.open('./samples/Before.jpg')
 image_np = utils.load_image_into_numpy_array(image)
 category_index = utils.create_category_index_from_labelmap('./samples/label_map.pbtxt', use_display_name=True)
 
@@ -117,7 +123,7 @@ utils.visualize_boxes_and_labels_on_image_array(
     category_index,
     instance_masks=results.get('detection_masks'),
     use_normalized_coordinates=True,
-    line_thickness=8)
+    line_thickness=1)
 
 plt.figure(figsize=(24, 16))
 plt.imshow(image_np)
